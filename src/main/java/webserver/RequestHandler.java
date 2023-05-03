@@ -15,6 +15,7 @@ import java.util.StringTokenizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import db.DataBase;
 import model.User;
 import util.HttpRequestUtils;
 import util.IOUtils;
@@ -65,7 +66,9 @@ public class RequestHandler extends Thread {
 				Map<String, String> params = HttpRequestUtils.parseQueryString(body);
 				User user = new User(params.get("userId"), params.get("password"), params.get("name"), params.get("email"));
 				log.debug("User : {} ", user);
-				
+				page="/index.html";
+				DataOutputStream dos = new DataOutputStream(out);
+				response302Header(dos,"/index.html");
 			}
 			DataOutputStream dos = new DataOutputStream(out);
 			byte[] body = Files.readAllBytes(new File("./webapp" + page).toPath());
@@ -133,6 +136,17 @@ public class RequestHandler extends Thread {
 	}
 		*/	
 
+
+	private void response302Header(DataOutputStream dos, String url) {
+		try {
+			dos.writeBytes("HTTP/1.1 302 Redirect \r\n");
+			dos.writeBytes("Location : " + url + "\r\n");
+			dos.writeBytes("\r\n");
+		}catch(IOException e) {
+			log.error(e.getMessage());
+		}
+		
+	}
 
 	private int getContentLength(String str) {
 		StringTokenizer st = new StringTokenizer(str);
