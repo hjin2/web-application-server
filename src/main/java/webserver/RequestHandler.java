@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import model.User;
 import util.HttpRequestUtils;
+import util.IOUtils;
 
 public class RequestHandler extends Thread {
 	private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
@@ -50,12 +51,31 @@ public class RequestHandler extends Thread {
 			if (str == null)
 				return;
 
+			// POST방식으로 회원가입하기
+			int contentLength = 0;
 			while (!str.equals("")) {
 				str = br.readLine();
+				if(str.contains("Content-Length"))
+					contentLength = getContentLength(str);
 				log.debug("header : {} ", str);
 			}
+			
+			if("/user/create".equals(page)) {
+				String body = IOUtils.readData(br, contentLength);
+				Map<String, String> params = HttpRequestUtils.parseQueryString(body);
+				User user = new User(params.get("userId"), params.get("password"), params.get("name"), params.get("email"));
+				log.debug("User : {} ", user);
+				
+			}
+			DataOutputStream dos = new DataOutputStream(out);
+			byte[] body = Files.readAllBytes(new File("./webapp" + page).toPath());
+			response200Header(dos, body.length);
+			responseBody(dos, body);
+	
+		
 
 			// GET방식으로 회원가입하기
+			/*
 			if (page.startsWith("/user/create")) {
 				st = new StringTokenizer(page, "&|=");
 				String[] forms = new String[8];
@@ -85,6 +105,12 @@ public class RequestHandler extends Thread {
 		} catch (IOException e) {
 			log.error(e.getMessage());
 		}
+		*/
+
+		
+		}catch(IOException e) {
+			log.error(e.getMessage());
+		}
 	}
 		/*
 			
@@ -107,6 +133,13 @@ public class RequestHandler extends Thread {
 	}
 		*/	
 
+
+	private int getContentLength(String str) {
+		StringTokenizer st = new StringTokenizer(str);
+		String tmp = st.nextToken();
+		int length = Integer.parseInt(st.nextToken());
+		return length;
+	}
 
 	private void response200Header(DataOutputStream dos, int lengthOfBodyContent) {
 		try {
